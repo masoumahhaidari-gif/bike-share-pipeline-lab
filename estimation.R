@@ -1,3 +1,4 @@
+#' NEED TO ADD DOCUMENTATION
 estimate_arrival_rates <- function(data) {
   
   # compute the average number of trips per hour between each pair
@@ -52,12 +53,3 @@ estimate_arrival_rates <- function(data) {
   
   return(mu_hat)
 }
-
-# Load the sample dataset
-bike_data <- read_csv("../Data/sample_bike.csv")
-
-# Estimate arrival rates
-arrival_rates <- estimate_arrival_rates(bike_data)
-
-# View the results
-print(arrival_rates, n = 10)
