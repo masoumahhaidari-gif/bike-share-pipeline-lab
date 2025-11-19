@@ -1,0 +1,53 @@
+---
+title: "PHP 1560: Week 12 Lab"
+author: [Your Name]
+format: pdf
+editor: visual
+---
+
+# Programming Design
+
+In this lab, you will design and implement an R pipeline that uses historical bike‑share usage data to recommend an initial placement of a fixed number of bikes at the start of each day. To do so, you will model users using non-homogeneous Poisson processes (NHPPs). Your goal for this lab is to write a set of functions such that the manager can input past usage data (in the same format as last week) and a number of bikes available and your program will generate data, visuals, and/or tables to propose where to place those bikes at the start of each day and include some insight into that placement.
+
+You will submit your solution as a link to a github repository including R scripts, not a Quarto report. Include:
+
+1.  R scripts implementing your pipeline (suggested: `estimation.R`, `simulation.R`, `placement.R`, `utils.R`, and `tests/testthat.R`).
+2.  A short **`README.md`** describing how to run your code and what each script does.
+3.  At least one test file with 1–2 unit tests verifying core functionality.
+4.  A **`results/`** folder containing example outputs (plots and tables) for at least three fleet sizes.
+
+Alice will introduce some background on (NHPPs) and some insight into the optimization that will be useful for your implementation. You **do not** have to be an optimization expert to implement your solution. You can consider any reasonable approach to finding a good placement of bikes.
+
+### Step 1: Sketching the Design
+
+Before coding, create a one‑page design document and have it approved by the instructor or TA.
+
+1.  Define the final output: What should the manager receive (e.g., a table of recommended bikes per station, an expected‑usage plot)?
+
+2.  Outline the high‑level steps, from data input to final results. Continue breaking down these steps until each piece is simple enough to be contained in its own function.
+
+3.  List your functions. For each function include:
+
+    -   Function name
+    -   Inputs (with data types)
+    -   Outputs (with formats)
+    -   Short description of its purpose
+
+4.  Draw a function dependency diagram showing the dependence of functions on each other.
+
+5.  Refine by considering where you could minimize redundancy or update the inputs/outputs to improve your design.
+
+### Step 2: Building Up Your Pipeline
+
+The next step is to implement your functions starting with those functions that do not depend on other functions and building up.
+
+-   Include Roxygen comments for every function (description, arguments, return value).
+-   Split code into logical scripts (estimation, simulation, placement, plotting/utilities).
+-   Use informative variable names and consistent indentation.
+-   Write at least one unit test for each main function using simple toy examples.
+-   Use `set.seed()` for reproducibility, and make `seed` an optional function argument.
+-   Be sure to regularly commit and push your changes to the repository.
+
+### Step 3: Generate Results
+
+Run your full pipeline on the dataset from last week for at least three fleet sizes. Be sure to practice interpreting the results for when you meet with the TA for grading.
