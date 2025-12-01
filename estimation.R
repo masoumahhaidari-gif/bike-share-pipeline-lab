@@ -33,55 +33,68 @@
 #'   }
 estimate_arrival_rates <- function(data) {
   
-  # compute the average number of trips per hour between each pair
+  # Compute average number of trips per hour between each station pair
   x_hat <- data %>%
-    mutate(hour = hour(start_time)) %>%
+    mutate(hour = lubridate::hour(start_time)) %>%
     filter(start_station != "R", end_station != "R") %>%
     group_by(start_station, end_station, hour) %>%
-    summarise(avg_trips = n() / n_distinct(as_date(start_time)), 
-              .groups = "drop") 
+    summarise(
+      avg_trips = n() / n_distinct(lubridate::as_date(start_time)),
+      .groups = "drop"
+    )
   
-  # pivot longer to get change in count 
+  # Convert long format to track station inventory changes
   data$end_station <- as.character(data$end_station)
   trips_long <- data %>%
-    pivot_longer(cols = c("start_station", "start_time", 
-                          "end_station", "end_time"),
-                 names_to = c("type", ".value"),   
-                 names_pattern = "(start|end)_(.*)") %>%
-    mutate(change = ifelse(type == "start", -1, 1),
-           hour = hour(time)) %>%
+    tidyr::pivot_longer(
+      cols = c("start_station", "start_time", "end_station", "end_time"),
+      names_to = c("type", ".value"),
+      names_pattern = "(start|end)_(.*)"
+    ) %>%
+    mutate(
+      change = ifelse(type == "start", -1, 1),
+      hour = lubridate::hour(time)
+    ) %>%
     select(station, time, hour, change)
   
-  # add hour markers so we can get cumulative time
-  dates <- unique(as_date(trips_long$time))
-  hours <- c(seq(0,23,1),seq(0,23,1)+0.9999999)
+  # Add hour markers for each station/date combination
+  dates <- unique(lubridate::as_date(trips_long$time))
+  hours <- c(seq(0, 23), seq(0, 23) + 0.9999999)
   stations <- unique(trips_long$station)
-  hr_pts <- expand.grid(time = dates, hour = hours, 
-                        station = stations) %>%
-    mutate(time = as.POSIXct(time) + hour*60*60,
-           hour = hour(time))
-  hr_pts$change <- 0
+  
+  hr_pts <- expand.grid(time = dates, hour = hours, station = stations) %>%
+    mutate(
+      time = as.POSIXct(time) + hour * 60 * 60,
+      hour = lubridate::hour(time),
+      change = 0
+    )
+  
+  # Combine raw and padded data
   trips_long <- rbind(trips_long, hr_pts)
   
-  # find average availability 
+  # Estimate average availability (time with count > 0 bikes)
   alpha_hat <- trips_long %>%
-    group_by(station) %>%
-    filter(station != "R") %>%
-    arrange(time) %>% 
-    mutate(count = cumsum(change),
-           date = as_date(time)) %>%
-    group_by(station, hour, date) %>%
-    summarize(time_avail = 
-                sum(difftime(time, lag(time), units="hours")*(count > 0), 
-                    na.rm = TRUE)) %>%
-    summarize(avg_avail = mean(time_avail)) %>%
-    mutate(avg_avail = round(as.numeric(avg_avail), digits = 4)) %>%
-    ungroup()
+    dplyr::group_by(station) %>%
+    dplyr::filter(station != "R") %>%
+    dplyr::arrange(time) %>%
+    dplyr::mutate(
+      count = cumsum(change),
+      date = lubridate::as_date(time)
+    ) %>%
+    dplyr::group_by(station, hour, date) %>%
+    dplyr::summarise(
+      time_avail = sum(diff(time) * (head(count, -1) > 0)) / 3600,
+      .groups = "drop_last"
+    ) %>%
+    dplyr::summarise(
+      avg_avail = round(mean(time_avail), 4),
+      .groups = "drop"
+    )
   
-  # join the data and compute arrival rates
+  # Merge trip counts with availability to compute arrival rates
   mu_hat <- x_hat %>%
     left_join(alpha_hat, by = c("start_station" = "station", "hour")) %>%
-    mutate(mu_hat = ifelse(avg_avail > 0, avg_trips / avg_avail, NA))
+    mutate(mu_hat = ifelse(avg_avail > 0, avg_trips / avg_avail, NA_real_))
   
   return(mu_hat)
 }
