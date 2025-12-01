@@ -43,7 +43,7 @@ estimate_arrival_rates <- function(data) {
       .groups = "drop"
     )
   
-  # Convert long format to track station inventory changes
+  # Convert to long format to track station inventory changes
   data$end_station <- as.character(data$end_station)
   trips_long <- data %>%
     pivot_longer(
@@ -53,19 +53,19 @@ estimate_arrival_rates <- function(data) {
     ) %>%
     mutate(
       change = ifelse(type == "start", -1, 1),
-      hour = lubridate::hour(time)
+      hour   = lubridate::hour(time)
     ) %>%
     select(station, time, hour, change)
   
   # Add hour markers for each station/date combination
-  dates <- unique(lubridate::as_date(trips_long$time))
-  hours <- c(seq(0, 23), seq(0, 23) + 0.9999999)
+  dates    <- unique(lubridate::as_date(trips_long$time))
+  hours    <- c(seq(0, 23), seq(0, 23) + 0.9999999)
   stations <- unique(trips_long$station)
   
   hr_pts <- expand.grid(time = dates, hour = hours, station = stations) %>%
     mutate(
-      time = as.POSIXct(time) + hour * 60 * 60,
-      hour = lubridate::hour(time),
+      time   = as.POSIXct(time) + hour * 60 * 60,
+      hour   = lubridate::hour(time),
       change = 0
     )
   
@@ -79,17 +79,17 @@ estimate_arrival_rates <- function(data) {
     arrange(time) %>%
     mutate(
       count = cumsum(change),
-      date = lubridate::as_date(time)
+      date  = lubridate::as_date(time)
     ) %>%
     group_by(station, hour, date) %>%
     summarise(
-      time_avail = sum(as.numeric(diff(time), 
+      time_avail = sum(as.numeric(diff(time),
                                   units = "hours") * (head(count, -1) > 0)),
       .groups = "drop_last"
     ) %>%
     summarise(
       avg_avail = round(mean(time_avail), 4),
-      .groups = "drop"
+      .groups   = "drop"
     )
   
   # Merge trip counts with availability to compute arrival rates
