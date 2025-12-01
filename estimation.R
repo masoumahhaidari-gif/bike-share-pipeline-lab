@@ -33,69 +33,89 @@
 #'   }
 estimate_arrival_rates <- function(data) {
   
-  # Compute average number of trips per hour between each station pair
-  x_hat <- data %>%
-    mutate(hour = lubridate::hour(start_time)) %>%
-    filter(start_station != "R", end_station != "R") %>%
-    group_by(start_station, end_station, hour) %>%
-    summarise(
-      avg_trips = n() / n_distinct(lubridate::as_date(start_time)),
-      .groups = "drop"
+  # Make sure station IDs are characters (not factors)
+  data <- data %>%
+    dplyr::mutate(
+      start_station = as.character(start_station),
+      end_station   = as.character(end_station)
     )
   
-  # Convert to long format to track station inventory changes
-  data$end_station <- as.character(data$end_station)
+  # 1. Average number of trips per hour between each station pair
+  x_hat <- data %>%
+    dplyr::filter(start_station != "R", end_station != "R") %>%
+    dplyr::mutate(hour = lubridate::hour(start_time)) %>%
+    dplyr::group_by(start_station, end_station, hour) %>%
+    dplyr::summarise(
+      avg_trips = n() / dplyr::n_distinct(lubridate::as_date(start_time)),
+      .groups   = "drop"
+    )
+  
+  # 2. Long format to track station inventory changes over time
   trips_long <- data %>%
-    pivot_longer(
-      cols = c("start_station", "start_time", "end_station", "end_time"),
-      names_to = c("type", ".value"),
+    dplyr::filter(start_station != "R", end_station != "R") %>%
+    tidyr::pivot_longer(
+      cols = c(start_station, start_time, end_station, end_time),
+      names_to     = c("type", ".value"),
       names_pattern = "(start|end)_(.*)"
     ) %>%
-    mutate(
-      change = ifelse(type == "start", -1, 1),
+    dplyr::mutate(
+      change = ifelse(type == "start", -1L, 1L),
+      time   = as.POSIXct(time),
       hour   = lubridate::hour(time)
     ) %>%
-    select(station, time, hour, change)
+    dplyr::select(station, time, hour, change)
   
-  # Add hour markers for each station/date combination
+  # 3. Add hour boundary points for each station and date
   dates    <- unique(lubridate::as_date(trips_long$time))
-  hours    <- c(seq(0, 23), seq(0, 23) + 0.9999999)
   stations <- unique(trips_long$station)
+  hours    <- c(seq(0, 23), seq(0, 23) + 0.9999999)
   
-  hr_pts <- expand.grid(time = dates, hour = hours, station = stations) %>%
-    mutate(
+  hr_pts <- expand.grid(
+    time    = dates,
+    hour    = hours,
+    station = stations,
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+  ) %>%
+    dplyr::mutate(
       time   = as.POSIXct(time) + hour * 60 * 60,
       hour   = lubridate::hour(time),
-      change = 0
-    )
+      change = 0L
+    ) %>%
+    dplyr::select(station, time, hour, change)
   
   # Combine raw and padded data
-  trips_long <- rbind(trips_long, hr_pts)
+  trips_long <- dplyr::bind_rows(trips_long, hr_pts)
   
-  # Estimate average availability (time with count > 0 bikes)
+  # 4. Estimate average availability (time with count > 0 bikes)
   alpha_hat <- trips_long %>%
-    group_by(station) %>%
-    filter(station != "R") %>%
-    arrange(time) %>%
-    mutate(
+    dplyr::filter(station != "R") %>%
+    dplyr::arrange(station, time) %>%
+    dplyr::group_by(station) %>%
+    dplyr::mutate(
       count = cumsum(change),
       date  = lubridate::as_date(time)
     ) %>%
-    group_by(station, hour, date) %>%
-    summarise(
-      time_avail = sum(as.numeric(diff(time),
-                                  units = "hours") * (head(count, -1) > 0)),
+    dplyr::group_by(station, hour, date) %>%
+    dplyr::summarise(
+      time_avail = sum(
+        as.numeric(diff(time), units = "hours") *
+          (head(count, -1) > 0)
+      ),
       .groups = "drop_last"
     ) %>%
-    summarise(
+    dplyr::summarise(
       avg_avail = round(mean(time_avail), 4),
       .groups   = "drop"
     )
   
-  # Merge trip counts with availability to compute arrival rates
+  # 5. Merge trip counts with availability to compute arrival rates
   mu_hat <- x_hat %>%
-    left_join(alpha_hat, by = c("start_station" = "station", "hour")) %>%
-    mutate(mu_hat = ifelse(avg_avail > 0, avg_trips / avg_avail, NA_real_))
+    dplyr::left_join(alpha_hat,
+                     by = c("start_station" = "station", "hour" = "hour")) %>%
+    dplyr::mutate(
+      mu_hat = ifelse(avg_avail > 0, avg_trips / avg_avail, NA_real_)
+    )
   
   return(mu_hat)
 }
