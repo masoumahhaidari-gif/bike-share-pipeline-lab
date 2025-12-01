@@ -25,7 +25,7 @@ The project includes:
 ├── README.md
 ```
 
-## **1. Input Data**
+## **Input Data**
 
 The pipeline expects historical bike-share data in the same format as previous labs. A small example file is included:
 
@@ -41,7 +41,7 @@ It contains:
 
 Timestamps must be in `YYYY-MM-DD HH:MM:SS` format.
 
-## **2. How to Run the Pipeline**
+## **How to Run the Pipeline**
 
 ### **Step 1: Load scripts**
 
@@ -91,7 +91,7 @@ generate_recommendations(intensity_list, fleet_sizes = c(100, 150, 200))
 
 Outputs are saved automatically to the **results/** folder.
 
-## **3. Script Descriptions**
+## **Script Descriptions**
 
 ### **estimation.R**
 
@@ -132,7 +132,7 @@ Utility functions:
 -   Formatting recommendation tables
 -   Additional helper functions
 
-## **4. Tests**
+## **Tests**
 
 Basic unit tests (using **testthat**) are located in:
 
@@ -145,7 +145,7 @@ These verify core functionality such as:
 -   arrival-rate calculations
 -   simulation output structure
 
-## **5. Example Outputs**
+## **Example Outputs**
 
 The **results/** folder contains:
 
@@ -155,7 +155,7 @@ The **results/** folder contains:
 
 for at least three fleet sizes.
 
-## **6. Requirements**
+## **Requirements**
 
 You will need the following R packages:
 
