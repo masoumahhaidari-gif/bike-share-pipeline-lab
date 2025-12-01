@@ -46,7 +46,7 @@ estimate_arrival_rates <- function(data) {
   # Convert long format to track station inventory changes
   data$end_station <- as.character(data$end_station)
   trips_long <- data %>%
-    tidyr::pivot_longer(
+    pivot_longer(
       cols = c("start_station", "start_time", "end_station", "end_time"),
       names_to = c("type", ".value"),
       names_pattern = "(start|end)_(.*)"
@@ -74,19 +74,19 @@ estimate_arrival_rates <- function(data) {
   
   # Estimate average availability (time with count > 0 bikes)
   alpha_hat <- trips_long %>%
-    dplyr::group_by(station) %>%
-    dplyr::filter(station != "R") %>%
+    group_by(station) %>%
+    filter(station != "R") %>%
     dplyr::arrange(time) %>%
     dplyr::mutate(
       count = cumsum(change),
       date = lubridate::as_date(time)
     ) %>%
-    dplyr::group_by(station, hour, date) %>%
-    dplyr::summarise(
+    group_by(station, hour, date) %>%
+    summarise(
       time_avail = sum(diff(time) * (head(count, -1) > 0)) / 3600,
       .groups = "drop_last"
     ) %>%
-    dplyr::summarise(
+    summarise(
       avg_avail = round(mean(time_avail), 4),
       .groups = "drop"
     )
