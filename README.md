@@ -1,6 +1,10 @@
 # **Bike-Share NHPP Pipeline**
 
-This repository contains an R-based pipeline for analyzing historical bike-share usage data and recommending an initial placement of bikes at the start of each day. The method uses **non-homogeneous Poisson processes (NHPPs)** to model time-varying demand and simulates system performance under different fleet sizes.
+This pipeline is designed so that a transportation or city manager can estimate 
+bike demand, simulate daily usage, and compare different fleet sizes to decide 
+the best number of bikes and how to place them at the start of the day. The 
+method uses non-homogeneous Poisson processes (NHPPs) to model demand over time 
+and simulate system performance.
 
 The project includes:
 
@@ -12,7 +16,8 @@ The project includes:
 
 ## **Input Data**
 
-The pipeline expects historical bike-share data in the same format as previous labs. A small example file is included:
+The pipeline expects historical bike-share data in the same format as previous 
+labs. A small example file is included:
 
 **`sample_bike.csv`**
 
@@ -28,31 +33,27 @@ Timestamps must be in `YYYY-MM-DD HH:MM:SS` format.
 
 ## **How to Run the Pipeline**
 
-### **Step 1: Load scripts**
-
 ```{r}
 source("run_pipeline.R")
-```
 
-### **Step 2: Load data**
-
-```{r}
 data <- read.csv("sample_bike.csv")
 data$start_time <- as.POSIXct(data$start_time)
-data$end_time <- as.POSIXct(data$end_time)
-```
+data$end_time   <- as.POSIXct(data$end_time)
 
-### Step 3: Run the full pipeline
-
-```{r}
+# Run the full pipeline
 results <- run_pipeline(
-  data = data,
-  total_bikes = 200,   # specify fleet size
-  seed = 123           # optional for reproducibility
+  data        = data,
+  total_bikes = 200,   # choose fleet size
+  seed        = 123
 )
-```
 
-### Step 4: Run for multiple fleet sizes
+This will automatically: 
+- estimate NHPP hourly arrival rates
+- simulate a full day of bike system usage 
+- compute recommended initial inventory per station 
+- generate summary outputs and plots
+
+### Compare Multiple Fleet Sizes (manager scenario)
 
 ```{r}
 fleet_sizes <- c(100, 200, 300)
@@ -60,16 +61,32 @@ fleet_sizes <- c(100, 200, 300)
 results_list <- lapply(fleet_sizes, function(b) {
   run_pipeline(data, total_bikes = b, seed = 123)
 })
+
+names(results_list) <- paste0("bikes_", fleet_sizes)
 ```
+Each element contains recommended starting inventory, simulation results, 
+and summary metrics.
 
-### Step 5: Visualize results
-
+### Visualize results
+# Inventory over time for a specific station
 ```{r}
 plot_inventory(results$inventory, station = "10")
+```
+# Heatmap of flows
+```{r}
 plot_flow_heatmap(results$mu_hat)
 ```
 
 ## **Script Descriptions**
+
+### **run_pipeline.R**
+
+Main entry point that coordinates:
+1. data preprocessing
+2. NHPP arrival-rate estimation
+3. demand simulation
+4. bike placement recommendations
+5. summary output
 
 ### **estimation.R**
 
@@ -92,6 +109,8 @@ Functions for generating realistic daily demand using NHPPs.
 -   **`simulate_arrivals()`** — generate Poisson arrivals per station-hour
 -   **`simulate_trips()`** — compute completed trips given capacity
 -   **`simulate_inventory()`** — track bike inventory across 24 hours
+
+These run automatically through run_pipeline().
 
 ### **placement.R**
 
@@ -132,12 +151,17 @@ for at least three fleet sizes.
 
 ## **Requirements**
 
-You will need the following R packages:
+Packages needed:
 
-```         
+```{r}
 tidyverse
 lubridate
 ggplot2
 dplyr
 tidyr
+testthat
+```
+If missing:
+```{r}
+install.packages(c("tidyverse", "lubridate", "ggplot2", "dplyr", "tidyr", "testthat"))
 ```
