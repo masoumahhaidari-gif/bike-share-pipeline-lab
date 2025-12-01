@@ -31,16 +31,6 @@
 #'     \item{avg_avail}{Average time (hours) station had bikes available.}
 #'     \item{mu_hat}{Estimated hourly arrival rate \eqn{\hat{\mu}}.}
 #'   }
-#'
-#' @examples
-#' \dontrun{
-#' data <- read.csv("sample_bike.csv")
-#' data$start_time <- as.POSIXct(data$start_time)
-#' data$end_time <- as.POSIXct(data$end_time)
-#' estimate_arrival_rates(data)
-#' }
-#'
-#' @export
 estimate_arrival_rates <- function(data) {
   
   # compute the average number of trips per hour between each pair
