@@ -40,32 +40,20 @@ source("run_pipeline.R")
 data <- read.csv("sample_bike.csv")
 ```
 
-### **Step 3: Estimate hourly arrival rates**
-
-```{r}
-mu_hat <- estimate_arrival_rates(data)
-```
-
-`mu_hat` computes:
-
--   average hourly trip counts
--   average hourly station availability
--   estimated hourly arrival rates These are used to build NHPP intensity functions for simulation.
-
-### **Step 4: Simulation (NHPP-based demand generation)**
+### **Step 3: Simulation (NHPP-based demand generation)**
 
 ```{r}
 intensity_list <- build_intensity_functions(mu_hat)   # if implemented internally
 sim_results <- simulate_network(intensity_list, n_sim = 100)
 ```
 
-### **Step 5: Search for a good placement**
+### **Step 4: Search for a good placement**
 
 ```{r}
 placement <- search_best_placement(intensity_list, n_bikes = 200)
 ```
 
-### **Step 6: Produce final outputs**
+### **Step 5: Produce final outputs**
 
 ```{r}
 generate_recommendations(intensity_list, fleet_sizes = c(100, 150, 200))
@@ -88,8 +76,6 @@ Main function:
     -   μ̂ = avg_trips / avg_avail
 
 These rates feed into the NHPP intensity functions used in simulation.
-
-------------------------------------------------------------------------
 
 ### **simulation.R**
 
@@ -147,10 +133,4 @@ lubridate
 ggplot2
 dplyr
 tidyr
-```
-
-Install using:
-
-```{r}
-install.packages(c("tidyverse", "lubridate"))
 ```
