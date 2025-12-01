@@ -30,7 +30,7 @@ Timestamps must be in `YYYY-MM-DD HH:MM:SS` format.
 
 ### **Step 1: Load scripts**
 
-``` r
+```{r}
 source("run_pipeline.R")
 ```
 
@@ -38,28 +38,36 @@ source("run_pipeline.R")
 
 ```{r}
 data <- read.csv("sample_bike.csv")
+data$start_time <- as.POSIXct(data$start_time)
+data$end_time <- as.POSIXct(data$end_time)
 ```
 
-### **Step 3: Simulation (NHPP-based demand generation)**
+### Step 3: Run the full pipeline
 
 ```{r}
-intensity_list <- build_intensity_functions(mu_hat)   # if implemented internally
-sim_results <- simulate_network(intensity_list, n_sim = 100)
+results <- run_pipeline(
+  data = data,
+  total_bikes = 200,   # specify fleet size
+  seed = 123           # optional for reproducibility
+)
 ```
 
-### **Step 4: Search for a good placement**
+### Step 4: Run for multiple fleet sizes
 
 ```{r}
-placement <- search_best_placement(intensity_list, n_bikes = 200)
+fleet_sizes <- c(100, 200, 300)
+
+results_list <- lapply(fleet_sizes, function(b) {
+  run_pipeline(data, total_bikes = b, seed = 123)
+})
 ```
 
-### **Step 5: Produce final outputs**
+### Step 5: Visualize results
 
 ```{r}
-generate_recommendations(intensity_list, fleet_sizes = c(100, 150, 200))
+plot_inventory(results$inventory, station = "A")
+plot_flow_heatmap(results$mu_hat)
 ```
-
-Outputs are saved automatically to the **results/** folder.
 
 ## **Script Descriptions**
 
@@ -81,24 +89,23 @@ These rates feed into the NHPP intensity functions used in simulation.
 
 Functions for generating realistic daily demand using NHPPs.
 
--   **`simulate_station_day()`** — simulates pickup/return times for a station
--   **`simulate_network()`** — simulates across all stations for many runs
+-   **`simulate_arrivals()`** — generate Poisson arrivals per station-hour
+-   **`simulate_trips()`** — compute completed trips given capacity
+-   **`simulate_inventory()`** — track bike inventory across 24 hours
 
 ### **placement.R**
 
 Functions for scoring placements and searching for good solutions.
 
--   **`score_placement()`** — evaluates shortages/overflow
--   **`search_best_placement()`** — heuristic search for allocations
--   **`generate_recommendations()`** — exports tables + plots for fleet sizes
+-   **`compute_initial_inventory()`**— heuristic allocation of bikes
+-   **`rebalance_inventory()`**— flag stations needing more/fewer bikes
 
 ### **utils.R**
 
-Utility functions:
+Utility functions for plotting:
 
--   Plotting intensity functions
--   Formatting recommendation tables
--   Additional helper functions
+-   **`plot_inventory()`**— inventory over time per station
+-   **`plot_flow_heatmap()`**— heatmap of station-to-station flows
 
 ## **Tests**
 
