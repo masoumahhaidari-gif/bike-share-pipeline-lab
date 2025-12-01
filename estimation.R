@@ -76,14 +76,15 @@ estimate_arrival_rates <- function(data) {
   alpha_hat <- trips_long %>%
     group_by(station) %>%
     filter(station != "R") %>%
-    dplyr::arrange(time) %>%
-    dplyr::mutate(
+    arrange(time) %>%
+    mutate(
       count = cumsum(change),
       date = lubridate::as_date(time)
     ) %>%
     group_by(station, hour, date) %>%
     summarise(
-      time_avail = sum(diff(time) * (head(count, -1) > 0)) / 3600,
+      time_avail = sum(as.numeric(diff(time), 
+                                  units = "hours") * (head(count, -1) > 0)),
       .groups = "drop_last"
     ) %>%
     summarise(

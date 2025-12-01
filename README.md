@@ -65,7 +65,7 @@ results_list <- lapply(fleet_sizes, function(b) {
 ### Step 5: Visualize results
 
 ```{r}
-plot_inventory(results$inventory, station = "A")
+plot_inventory(results$inventory, station = "10")
 plot_flow_heatmap(results$mu_hat)
 ```
 
