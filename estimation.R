@@ -1,4 +1,46 @@
-#' NEED TO ADD DOCUMENTATION
+#' Estimate hourly arrival rates for a bike-share system
+#'
+#' This function computes hourly arrival rates \eqn{\hat{\mu}} for each
+#' origin–destination station pair using historical trip data. The
+#' arrival rate estimate is based on:
+#'
+#' \itemize{
+#'   \item the average number of trips per hour between each station pair, and
+#'   \item the average amount of time each station has at least one bike
+#'     available (estimated using cumulative inventory over time).
+#' }
+#'
+#' The final rate estimate is:
+#' \deqn{\hat{\mu} = \frac{\text{avg_trips}}{\text{avg_avail}}}
+#' whenever stations are available during that hour.
+#'
+#' @param data A data frame containing at least the following columns:
+#'   \describe{
+#'     \item{start_station}{Character or factor: station ID where the trip starts.}
+#'     \item{end_station}{Character or factor: station ID where the trip ends.}
+#'     \item{start_time}{POSIXct: trip start timestamp.}
+#'     \item{end_time}{POSIXct: trip end timestamp.}
+#'   }
+#'
+#' @return A tibble containing hourly arrival‐rate estimates with columns:
+#'   \describe{
+#'     \item{start_station}{Origin station.}
+#'     \item{end_station}{Destination station.}
+#'     \item{hour}{Hour of the day (0–23).}
+#'     \item{avg_trips}{Average hourly number of trips from origin to destination.}
+#'     \item{avg_avail}{Average time (hours) station had bikes available.}
+#'     \item{mu_hat}{Estimated hourly arrival rate \eqn{\hat{\mu}}.}
+#'   }
+#'
+#' @examples
+#' \dontrun{
+#' data <- read.csv("sample_bike.csv")
+#' data$start_time <- as.POSIXct(data$start_time)
+#' data$end_time <- as.POSIXct(data$end_time)
+#' estimate_arrival_rates(data)
+#' }
+#'
+#' @export
 estimate_arrival_rates <- function(data) {
   
   # compute the average number of trips per hour between each pair
