@@ -46,6 +46,7 @@ results <- run_pipeline(
   total_bikes = 200,   # choose fleet size
   seed        = 123
 )
+```
 
 This will automatically: 
 - estimate NHPP hourly arrival rates
