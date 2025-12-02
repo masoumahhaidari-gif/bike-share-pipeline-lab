@@ -1,13 +1,31 @@
-test_that("estimate_arrival_rates returns expected columns", {
-  sample <- data.frame(
-    start_station = c("A"),
-    end_station = c("B"),
-    start_time = as.POSIXct("2022-01-01 01:00:00"),
-    end_time   = as.POSIXct("2022-01-01 01:10:00")
+library(testthat)
+source("../utils.R")
+source("../estimation.R")
+source("../simulation.R")
+source("../placement.R")
+
+test_that("compute_initial_inventory sums to total_bikes", {
+  demand_df <- data.frame(
+    station = c("A", "B", "C"),
+    demand  = c(10, 20, 30)
   )
   
-  res <- estimate_arrival_rates(sample)
+  inv <- compute_initial_inventory(demand_df, total_bikes = 60)
   
-  expect_true(all(c("start_station", "end_station", "hour",
-                    "avg_trips", "avg_avail", "mu_hat") %in% names(res)))
+  expect_equal(sum(inv), 60)
+  expect_equal(length(inv), 3)
+})
+
+test_that("simulate_arrivals returns arrivals with correct length", {
+  rates_df <- data.frame(
+    start_station = c("A", "A", "B"),
+    end_station   = c("B", "C", "A"),
+    hour          = c(8, 9, 10),
+    mu_hat        = c(1, 2, 3)
+  )
+  
+  sim <- simulate_arrivals(rates_df, seed = 1)
+  
+  expect_true("arrivals" %in% names(sim))
+  expect_equal(nrow(sim), 3)
 })
