@@ -99,13 +99,13 @@ This returns a list containing:
 
 ## Visualization Examples
 
-# Plot a station’s inventory over time:
+### Plot a station’s inventory over time:
 
 ```{r}
 plot_inventory(result_100$inventory, station = "10")
 ```
 
-# Plot estimated flows between stations:
+### Plot estimated flows between stations:
 
 ```{r}
 plot_flow_heatmap(mu_hat)
