@@ -42,9 +42,7 @@ preprocess_bike_data <- function(df) {
     )
 }
 
-# -------------------------------
 # PLOTTING FUNCTIONS
-# -------------------------------
 
 #' Plot inventory over time for a single station
 #'
@@ -78,14 +76,15 @@ plot_inventory <- function(inventory_df, station) {
 plot_flow_heatmap <- function(mu_hat) {
   
   mu_hat %>%
+    filter(!is.na(mu_hat)) %>% 
     ggplot(aes(x = start_station, y = end_station, fill = mu_hat)) +
     geom_tile() +
-    scale_fill_viridis_c(option = "plasma") +
+    scale_fill_viridis_c(option = "plasma", trans = "log") +
     labs(
       title = "Estimated Flow Heatmap (μ̂)",
       x = "Start Station",
       y = "End Station",
-      fill = "μ̂"
+      fill = "log(μ̂)"
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
