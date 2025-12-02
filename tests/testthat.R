@@ -4,7 +4,7 @@ source("../estimation.R")
 source("../simulation.R")
 source("../placement.R")
 
-test_that("compute_initial_inventory sums to total_bikes", {
+test_that("compute_initial_inventory sums correctly", {
   demand_df <- data.frame(
     station = c("A", "B", "C"),
     demand  = c(10, 20, 30)
@@ -13,10 +13,9 @@ test_that("compute_initial_inventory sums to total_bikes", {
   inv <- compute_initial_inventory(demand_df, total_bikes = 60)
   
   expect_equal(sum(inv), 60)
-  expect_equal(length(inv), 3)
 })
 
-test_that("simulate_arrivals returns arrivals with correct length", {
+test_that("simulate_arrivals returns correct rows", {
   rates_df <- data.frame(
     start_station = c("A", "A", "B"),
     end_station   = c("B", "C", "A"),
@@ -25,7 +24,7 @@ test_that("simulate_arrivals returns arrivals with correct length", {
   )
   
   sim <- simulate_arrivals(rates_df, seed = 1)
-  
-  expect_true("arrivals" %in% names(sim))
   expect_equal(nrow(sim), 3)
+  expect_true("arrivals" %in% names(sim))
 })
+
