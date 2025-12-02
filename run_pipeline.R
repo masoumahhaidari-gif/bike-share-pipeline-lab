@@ -17,12 +17,15 @@ source("utils.R")
 #'   capacities. If NULL, all stations are given capacity 50.
 #'
 #' @return A list containing:
-#'   - mu_hat: hourly arrival-rate estimates
-#'   - arrivals: simulated arrivals
-#'   - trips: simulated completed trips
-#'   - initial_inventory: starting bikes per station
-#'   - inventory: inventory over time
-#'   - rebalance: summary of where bikes should be added/removed
+#'   \itemize{
+#'     \item mu_hat: hourly arrival-rate estimates
+#'     \item arrivals: simulated arrivals
+#'     \item trips: simulated completed trips
+#'     \item initial_inventory: starting bikes per station
+#'     \item inventory: inventory over time
+#'     \item rebalance: summary of where bikes should be added/removed
+#'   }
+#' @export
 run_pipeline <- function(data,
                          total_bikes,
                          seed = 123,
@@ -76,3 +79,4 @@ run_pipeline <- function(data,
     rebalance         = reb
   )
 }
+
