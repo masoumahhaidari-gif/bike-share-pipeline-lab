@@ -1,81 +1,114 @@
 # **Bike-Share NHPP Pipeline**
 
-This pipeline is designed so that a transportation or city manager can estimate 
-bike demand, simulate daily usage, and compare different fleet sizes to decide 
-the best number of bikes and how to place them at the start of the day. The 
-method uses non-homogeneous Poisson processes (NHPPs) to model demand over time 
-and simulate system performance.
+This project implements a full pipeline for analyzing and simulating bike-share
+demand using non-homogeneous Poisson processes (NHPPs). The pipeline estimates 
+hourly arrival rates, simulates daily usage, and recommends initial bike 
+placement for different fleet sizes.
 
-The project includes:
+It is designed for a transportation or city manager deciding:
 
--   NHPP arrival-rate estimation
--   Network-wide demand simulation
--   Heuristic bike placement optimization
--   Visualizations and output tables
--   Example results for multiple fleet sizes
+- how many bikes are needed in the system
+- where to place them at the start of the day
+- how different fleet sizes affect unmet demand
+
+Outputs include tables, simulated inventories, and performance summaries for 
+multiple fleet sizes.
 
 ## **Input Data**
 
-The pipeline expects historical bike-share data in the same format as previous 
-labs. A small example file is included:
+The pipeline expects a CSV file with the following columns:
 
+- start_station
+- end_station
+- start_time (timestamp: "YYYY-MM-DD HH:MM:SS")
+- end_time
+- customer_type (ignored)
+
+An example file is provided:
 **`sample_bike.csv`**
 
-It contains:
-
--   `start_station`
--   `end_station`
--   `start_time`
--   `end_time`
--   `customer_type` (ignored in the pipeline)
-
-Timestamps must be in `YYYY-MM-DD HH:MM:SS` format.
-
 ## **How to Run the Pipeline**
+
+1. Load project functions
+
+```{r}
+source("utils.R")
+source("estimation.R")
+source("simulation.R")
+source("placement.R")
+```
+
+2. Load the data
+
+```{r}
+df <- load_bike_data("sample_bike.csv")
+```
+
+3. Estimate hourly NHPP arrival rates
+
+```{r}
+mu_hat <- estimate_arrival_rates(df)
+```
+
+4. Define station capacities
+(Here we assign 50 bikes per station as an example.)
+
+```{r}
+stations   <- sort(unique(mu_hat$start_station))
+capacities <- setNames(rep(50, length(stations)), stations)
+```
+
+5. Generate placement recommendations for multiple fleet sizes
+
+```{r}
+generate_recommendations(
+  mu_hat      = mu_hat,
+  fleet_sizes = c(50, 80, 100),   # choose any 3+
+  capacities  = capacities,
+  seed        = 123,
+  results_dir = "results"
+)
+```
+
+This will automatically:
+- simulate arrivals
+- simulate completed trips
+- compute a heuristic starting inventory per station
+- score unmet demand for each fleet size
+- save CSV outputs into results/
+
+Optional: Run the full pipeline for a single fleet size
 
 ```{r}
 source("run_pipeline.R")
 
-data <- read.csv("sample_bike.csv")
-data$start_time <- as.POSIXct(data$start_time)
-data$end_time   <- as.POSIXct(data$end_time)
-
-# Run the full pipeline
-results <- run_pipeline(
-  data        = data,
-  total_bikes = 200,   # choose fleet size
+result_100 <- run_pipeline(
+  data        = df,
+  total_bikes = 100,
   seed        = 123
 )
 ```
 
-This will automatically: 
-- estimate NHPP hourly arrival rates
-- simulate a full day of bike system usage 
-- compute recommended initial inventory per station 
-- generate summary outputs and plots
+This returns a list containing:
+- NHPP arrival rates
+- simulated arrivals
+- simulated trips
+- initial inventory
+- full 24-hour inventory
+- rebalance flags
 
-### Compare Multiple Fleet Sizes (manager scenario)
+## Visualization Examples
+
+# Plot a station’s inventory over time:
 
 ```{r}
-fleet_sizes <- c(100, 200, 300)
-
-results_list <- lapply(fleet_sizes, function(b) {
-  run_pipeline(data, total_bikes = b, seed = 123)
-})
-
-names(results_list) <- paste0("bikes_", fleet_sizes)
+plot_inventory(result_100$inventory, station = "10")
 ```
-Each element contains recommended starting inventory, simulation results, 
-and summary metrics.
 
-### Visualize results
-# Inventory over time for a specific station
+# Plot estimated flows between stations:
+
 ```{r}
-plot_inventory(results$inventory, station = "10")
-```
-# Heatmap of flows
-```{r}
-plot_flow_heatmap(results$mu_hat)
+plot_flow_heatmap(mu_hat)
 ```
 
 ## **Script Descriptions**
@@ -162,6 +195,7 @@ dplyr
 tidyr
 testthat
 ```
+
 If missing:
 ```{r}
 install.packages(c("tidyverse", "lubridate", "ggplot2", "dplyr", "tidyr", "testthat"))
